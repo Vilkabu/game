@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ДЕТЕКТИВ — Небольшие дела</title>
+<style>
+:root{
+  --bg:#0e1116; --bg2:#151a22; --card:#1a212c; --card2:#202937;
+  --ink:#e8e2d4; --muted:#8a93a3; --accent:#c9a227; --accent2:#7fb069;
+  --danger:#c05555; --line:#2a3444; --hint-a:0.28;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:radial-gradient(1200px 700px at 70% -10%,#1b2330 0%,var(--bg) 60%);
+  color:var(--ink); font-family:Georgia,'Times New Roman',serif; min-height:100vh;
+}
+button{font-family:inherit;cursor:pointer}
+h1,h2,h3{font-weight:normal}
+/* ---------- HEADER ---------- */
+header{
+  display:flex;align-items:center;gap:14px;padding:14px 22px;
+  border-bottom:1px solid var(--line);background:rgba(10,12,16,.7);
+  position:sticky;top:0;z-index:50;backdrop-filter:blur(6px);
+}
+.logo{font-size:20px;letter-spacing:3px;color:var(--accent)}
+.logo small{color:var(--muted);letter-spacing:1px;font-size:11px;display:block}
+.case-chip{font-size:13px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:4px 12px}
+#timer{margin-left:auto;font-size:14px;color:var(--danger);font-variant-numeric:tabular-nums}
+#notebookBtn{margin-left:auto;background:none;border:1px solid var(--line);color:var(--ink);
+  border-radius:8px;padding:7px 14px;font-size:14px}
+#notebookBtn:hover{border-color:var(--accent);color:var(--accent)}
+header #notebookBtn.spacer-ml{margin-left:8px}
+/* ---------- LAYOUT ---------- */
+#app{max-width:1080px;margin:0 auto;padding:26px 20px 80px}
+.screen{display:none;animation:fade .35s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* ---------- MENU ---------- */
+.hero{text-align:center;padding:46px 0 30px}
+.hero h1{font-size:44px;letter-spacing:6px;color:var(--accent)}
+.hero p{color:var(--muted);margin-top:12px;font-style:italic}
+.diff-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:34px 0 10px}
+.diff{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:14px 22px;
+  width:230px;text-align:left;transition:.2s;color:var(--ink)}
+.diff:hover{transform:translateY(-3px);border-color:var(--muted)}
+.diff.sel{border-color:var(--accent);background:var(--card2);box-shadow:0 0 0 1px var(--accent) inset}
+.diff b{font-size:18px}
+.diff .tag{font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase}
+.diff p{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5;font-family:system-ui,sans-serif}
+.cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:26px}
+.case-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;transition:.2s}
+.case-card:hover{transform:translateY(-4px);border-color:var(--accent)}
+.case-card .em{font-size:34px}
+.case-card h3{margin:10px 0 8px;font-size:20px}
+.case-card p{font-size:13.5px;color:var(--muted);line-height:1.55;font-family:system-ui,sans-serif;min-height:60px}
+.case-card .btn{margin-top:14px}
+/* ---------- BUTTONS ---------- */
+.btn{background:var(--accent);color:#14161a;border:none;border-radius:8px;padding:10px 20px;
+  font-size:14.5px;letter-spacing:.5px;transition:.15s}
+.btn:hover{filter:brightness(1.12)}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);border-color:var(--muted)}
+.btn.danger{background:var(--danger);color:#fff}
+/* ---------- GAME ---------- */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 22px}
+.tab{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;
+  padding:9px 18px;font-size:14px}
+.tab.active{color:var(--accent);border-color:var(--accent)}
+.tab .done{color:var(--accent2);font-size:11px;margin-left:5px}
+.panel-title{font-size:24px;margin-bottom:6px}
+.panel-sub{color:var(--muted);font-size:14px;margin-bottom:20px;font-family:system-ui,sans-serif;line-height:1.6}
+.intro-box{background:var(--card);border-left:3px solid var(--accent);padding:18px 22px;border-radius:0 10px 10px 0;
+  font-style:italic;line-height:1.7;margin-bottom:24px}
+/* clues */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.clue{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.clue h4{font-size:16px;margin-bottom:6px}
+.clue .st{font-size:11px;color:var(--accent2);letter-spacing:1px;text-transform:uppercase}
+.clue p{font-size:13.5px;color:var(--muted);line-height:1.55;margin-top:8px;font-family:system-ui,sans-serif;display:none}
+.clue.open p{display:block;color:#cfd6e2}
+.clue .btn{margin-top:10px;padding:6px 14px;font-size:13px}
+.clue.open .btn{display:none}
+/* witnesses */
+.wit-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.wit{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;text-align:left;color:var(--ink);transition:.2s;width:100%}
+.wit:hover{border-color:var(--accent);transform:translateY(-2px)}
+.wit .ava{font-size:30px}
+.wit b{display:block;margin-top:8px;font-size:16px}
+.wit span{font-size:12.5px;color:var(--muted);font-family:system-ui,sans-serif}
+/* interview */
+.chat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;min-height:180px;margin-bottom:18px}
+.msg{margin-bottom:14px;line-height:1.65;font-size:15px}
+.msg .who{color:var(--accent);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:3px;font-family:system-ui,sans-serif}
+.msg.you{color:#9db4d0;font-style:italic}
+.qrow{display:flex;gap:10px;flex-wrap:wrap}
+.qrow .btn{background:var(--card2);border:1px solid var(--line);color:var(--ink);font-size:13.5px}
+.qrow .btn:hover{border-color:var(--accent)}
+.qrow .btn.asked{opacity:.45;text-decoration:line-through}
+/* suspects */
+.susp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.susp{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;position:relative}
+.susp h4{font-size:17px}
+.susp .role{font-size:12.5px;color:var(--accent);margin:2px 0 10px;font-family:system-ui,sans-serif}
+.susp p{font-size:13px;color:var(--muted);line-height:1.55;font-family:system-ui,sans-serif}
+.susp .btn{margin-top:12px;width:100%}
+.susp.elim{opacity:.4}
+.susp.elim::after{content:'ОТСТРАНЁН';position:absolute;top:10px;right:12px;color:var(--danger);font-size:11px;letter-spacing:2px}
+/* hints — deliberately hard to notice */
+.hint{color:rgba(201,162,39,var(--hint-a));transition:color .3s;border-bottom:1px dotted rgba(201,162,39,calc(var(--hint-a)*.7));cursor:help}
+.hint:hover{color:var(--accent)}
+body[data-diff="easy"]{--hint-a:.5}
+body[data-diff="normal"]{--hint-a:.26}
+body[data-diff="hard"]{--hint-a:.09}
+body[data-diff="hard"] .hint:hover{color:var(--accent)}
+.hint.pulse{animation:pulse 1s ease}
+@keyframes pulse{0%{background:rgba(201,162,39,.4)}100%{background:transparent}}
+/* contradiction */
+.contra{display:none;margin-top:14px;background:rgba(192,85,85,.12);border:1px solid var(--danger);
+  border-radius:10px;padding:12px 14px;font-size:13.5px;font-family:system-ui,sans-serif}
+.contra b{color:var(--danger)}
+/* notebook */
+#nb{position:fixed;top:0;right:-360px;width:340px;height:100vh;background:var(--bg2);border-left:1px solid var(--line);
+  z-index:60;padding:22px;overflow-y:auto;transition:right .3s;font-family:system-ui,sans-serif}
+#nb.open{right:0}
+#nb h3{color:var(--accent);letter-spacing:2px;margin-bottom:14px}
+#nb .sec{margin-bottom:18px}
+#nb .sec h5{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+#nb .item{font-size:13px;line-height:1.5;padding:7px 0;border-bottom:1px dashed var(--line)}
+#nb .item.h{color:#d8c98a}
+#nb .empty{font-size:12.5px;color:var(--muted);font-style:italic}
+#nbClose{float:right;background:none;border:none;color:var(--muted);font-size:20px}
+/* toast */
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card2);
+  border:1px solid var(--accent);color:var(--ink);padding:10px 22px;border-radius:30px;font-size:14px;
+  transition:transform .3s;z-index:70;font-family:system-ui,sans-serif}
+#toast.show{transform:translateX(-50%) translateY(0)}
+/* result */
+.result{max-width:640px;margin:40px auto;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:36px;text-align:center}
+.result .big{font-size:52px}
+.result h2{font-size:26px;margin:10px 0}
+.result .stars{font-size:30px;color:var(--accent);letter-spacing:6px;margin:8px 0}
+.result p{color:var(--muted);line-height:1.7;font-family:system-ui,sans-serif;font-size:14px;text-align:left;margin:16px 0}
+.result .row{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+footer{text-align:center;color:#3d4654;font-size:11px;letter-spacing:2px;padding:20px}
+</style>
+</head>
+<body data-diff="normal">
+<header>
+  <div class="logo">ДЕТЕКТИВ<small>бюро мелких дел</small></div>
+  <div class="case-chip" id="caseChip" style="display:none"></div>
+  <div id="timer" style="display:none"></div>
+  <button id="notebookBtn" style="display:none">📓 Блокнот <span id="nbCount"></span></button>
+</header>
+
+<div id="app">
+
+  <!-- ================= MENU ================= -->
+  <section class="screen active" id="scr-menu">
+    <div class="hero">
+      <h1>ДЕТЕКТИВ</h1>
+      <p>Небольшие дела. Внимательный взгляд. Никакой магии — только логика.</p>
+    </div>
+    <h3 style="text-align:center;color:var(--muted);letter-spacing:3px;font-size:13px">ВЫБЕРИТЕ УРОВЕНЬ СЛОЖНОСТИ</h3>
+    <div class="diff-row" id="diffRow"></div>
+    <h3 style="text-align:center;color:var(--muted);letter-spacing:3px;font-size:13px;margin-top:30px">ВЫБЕРИТЕ ДЕЛО</h3>
+    <div class="cases" id="caseList"></div>
+    <footer>ВНИМАНИЕ: ПОДСКАЗКИ В ТЕКСТЕ ЕСТЬ ВСЕГДА. ИХ ПРОСТО НУЖНО ЗАМЕТИТЬ.</footer>
+  </section>
+
+  <!-- ================= CASE INTRO ================= -->
+  <section class="screen" id="scr-intro">
+    <button class="btn ghost" onclick="goMenu()">← Все дела</button>
+    <h2 class="panel-title" id="introTitle" style="margin-top:20px"></h2>
+    <div class="intro-box" id="introText"></div>
+    <p class="panel-sub">Осмотрите место преступления, опросите свидетелей, соберите улики — и только потом называйте виновного. Ошибка в обвинении отразится на вашей репутации.</p>
+    <button class="btn" onclick="startInvestigation()">Начать расследование →</button>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <section class="screen" id="scr-game">
+    <div class="tabs">
+      <button class="tab" data-tab="scene" onclick="showTab('scene')">🔍 Место преступления</button>
+      <button class="tab" data-tab="wit" onclick="showTab('wit')">🗣 Свидетели <span class="done" id="witDone"></span></button>
+      <button class="tab" data-tab="susp" onclick="showTab('susp')">👤 Подозреваемые</button>
+    </div>
+
+    <div id="tab-scene">
+      <h2 class="panel-title">Место преступления</h2>
+      <p class="panel-sub">Осмотрите каждую улику. Внимательно читайте описания — важное часто прячется на виду.</p>
+      <div class="grid" id="clueGrid"></div>
+    </div>
+
+    <div id="tab-wit" style="display:none">
+      <div id="witSelect">
+        <h2 class="panel-title">Свидетели</h2>
+        <p class="panel-sub">Опросите всех. Свидетели говорят правду… как правило. На высокой сложности — не факт.</p>
+        <div class="wit-list" id="witList"></div>
+      </div>
+      <div id="witTalk" style="display:none">
+        <button class="btn ghost" onclick="backToWitList()">← К списку свидетелей</button>
+        <h2 class="panel-title" id="witName" style="margin-top:16px"></h2>
+        <p class="panel-sub" id="witRole"></p>
+        <div class="chat" id="chat"><div class="msg" id="witHello"></div></div>
+        <div class="qrow" id="qrow"></div>
+        <div class="contra" id="contra"></div>
+      </div>
+    </div>
+
+    <div id="tab-susp" style="display:none">
+      <h2 class="panel-title">Подозреваемые</h2>
+      <p class="panel-sub">Когда будете уверены — обвиняйте. Подумайте: кто имел доступ, возможность и мотив? Кто врёт об алиби?</p>
+      <div class="susp-grid" id="suspGrid"></div>
+    </div>
+  </section>
+
+  <!-- ================= RESULT ================= -->
+  <section class="screen" id="scr-result">
+    <div class="result" id="resultBox"></div>
+  </section>
+</div>
+
+<!-- NOTEBOOK -->
+<aside id="nb">
+  <button id="nbClose" onclick="toggleNb()">✕</button>
+  <h3>БЛОКНОТ</h3>
+  <div class="sec"><h5>Улики</h5><div id="nbClues"></div></div>
+  <div class="sec"><h5>Замеченные подсказки</h5><div id="nbHints"></div></div>
+  <div class="sec"><h5>Показания</h5><div id="nbWits"></div></div>
+</aside>
+<div id="toast"></div>
+
+<script>
+/* ==================== DATA ==================== */
+const DIFFS = {
+  easy:   {label:'Лёгкий',  tag:'разминка',  desc:'Подсказки заметнее, свидетели разговорчивее, подозреваемых — трое.', suspects:3, liar:false, timer:0},
+  normal: {label:'Средний', tag:'классика',  desc:'Подсказки едва заметны. Придётся читать очень внимательно.', suspects:4, liar:false, timer:0},
+  hard:   {label:'Сложный', tag:'хардкор',   desc:'Подсказки почти невидимы. Один свидетель лжёт. Время ограничено: 10 минут.', suspects:4, liar:true, timer:600}
+};
+
+const CASES = {
+  coffee: {
+    emoji:'☕', title:'Ограбление кофейни «Утрёнка»',
+    teaser:'Ночью вскрыли сейф: пропали 120 000 ₽ из кассы. Взлом — через подсобку, сигнализация молчала.',
+    intro:'Кофейня «Утрёнка» на ул. Пушкина. Между 23:00 и 07:00 неизвестный проник в подсобку через окно, отключил сигнализацию изнутри и вскрыл сейф. Похищено 120 000 ₽. Дверей не взламывали — либо был ключ, либо входили через окно. Код от сейфа знали только двое: владелец и старший бариста.',
+    culprit:'ivan',
+    explanation:'Сейф был вскрыт БЕЗ повреждений — только зная код. Код знали владелец и старший бариста Иван Сомов. Свидетели независимо описали человека в синей спортивной куртке — точно такая есть у Ивана (видна на его фото в соцсетях, если присмотреться к анкете). Следы обуви 44 размера совпадают. Алиби Ивана («спал домой») никто не подтверждает. Гоша Крылов, которого пугает его «44 размер», в кофейне никогда не бывал и кода не знал — он красная селёдка.',
+    clues:[
+      {id:'window', name:'Окно подсобки', desc:'Окно открыто изнутри, форточка не заперта. На подоконнике — <span class="hint" data-h="Обрывок синей синтетической нити на подоконнике — кто-то в синем костюме или куртке залезал через окно.">обрывок синей нитки</span>.'},
+      {id:'safe', name:'Сейф', desc:'Вскрыт чисто, <span class="hint" data-h="Сейф не взломан, а открыт кодом. Значит, вор знал код — это резко сужает круг подозреваемых.">без единой царапины</span>. Деньги исчезли, документы нетронуты.'},
+      {id:'prints', name:'Пол в подсобке', desc:'Отпечатков почти нет — работали в перчатках. Следы грязной обуви, <span class="hint" data-h="По глубине и длине следа эксперт определил обувь 44 размера. Стоит спросить у подозреваемых, какой размер они носят.">размер 44</span>.'},
+      {id:'cup', name:'Стол бариста', desc:'Недопитый кофе, расписание смен. Смену до 23:00 закрывал <span class="hint" data-h="Смену до 23:00 закрывал Иван — он последним имел доступ и знал, когда сейф наполняют выручкой.">старший бариста Иван</span>.'},
+      {id:'note', name:'Кассовая книга', desc:'Вчера в кассу внесли крупную выручку выходного дня. <span class="hint" data-h="Вчера сдали крупную выручку — кто-то знал, что сейф сейчас полон. Знали это люди изнутри.">Все из персонала знали об этом</span>.'}
+    ],
+    witnesses:[
+      {id:'galya', name:'Галина Петровна', role:'продавец магазина «24/7» напротив', emoji:'🧓',
+       hello:'Ой, я уже и полиции всё рассказала. Сидела за кассой, скучно было, вот и присматривалась.',
+       lines:[
+        {q:'Что вы видели прошлой ночью?', a:'Часа в два ночи от кофейни отошёл мужчина. Спортивная куртка, капюшон накинут, сумка через плечо. <span class="hint" data-h="Свидетель видела человека в СИНЕЙ спортивной куртке с капюшоном около 2 ночи — сравните с одеждой подозреваемых.">Куртка синяя, точно помню — я в таких мужиков не ошибусь</span>.'},
+        {q:'Вы его узнали?', a:'Лицо не разглядела — темно было. Широкая спина, молодой, уверенный такой походкой. Стоял у их подсобки и курил.'},
+        {q:'Во сколько это было?', a:'Два ноль-ноль, может чуть позже. У меня касса чек выбила — я на часы глянула.'}]},
+      {id:'timur', name:'Тимур Алиев', role:'уборщик кофейни', emoji:'🧹',
+       hello:'Я тут не при чём. Я убираю и ухожу. Ключи у меня, но я дома спал.',
+       lines:[
+        {q:'Где вы были ночью?', a:'Дома! Жена подтвердит. Я до двадцати трёх убирался, <span class="hint" data-h="Тимур утверждает, что запер окно подсобки. Но окно нашли открытым изнутри — либо он врёт, либо открывал кто-то, кто был внутри после 23:00.">окно подсобки запер, честное слово</span>.'},
+        {q:'Кто мог знать про сейф?', a:'Да все знали, что сейф есть. А вот код — вроде только хозяин и <span class="hint" data-h="Код от сейфа знали только владелец и старший бариста Иван. Сейф вскрыт без повреждений — ищите того, кто знал код.">Иванчик, старший бариста</span>.'},
+        {q:'Кто закрывал кофейню?', a:'Вчера Иван закрывал. Он всегда закрывает. Мари́нку вот уволили на прошлой неделе — она теперь ходит и пыхтит на всех.'}],
+       lieClue:'window'},
+      {id:'dima', name:'Дима Кротов', role:'курьер, приходил за заказом в 6:50', emoji:'🛵',
+       hello:'Я только кофе забирал, клянусь. Но кое-что видел, да.',
+       lines:[
+        {q:'Что вы видели утром?', a:'Кофейня закрыта, а у заднего входа стоит мужик в спортивной куртке, дымит. <span class="hint" data-h="Утром у заднего входа стоял человек в синей спортивной куртке — он присматривал место или выносил остаток.">Синяя куртка, сумка такая спортивная, тёмная</span>.'},
+        {q:'Вы его узнали бы?', a:'Рост средний, плечистый. Я бы опознал, увидь ещё раз.'},
+        {q:'Ещё что-нибудь заметили?', a:'Номер машины не взял — зря. Но пепелище под окном большое, он там долго стоял.'}]},
+      {id:'sergey', name:'Сергей Храпов', role:'владелец кофейни', emoji:'👔',
+       hello:'Моё детище ограбили! Сам в шоке. Спрашивайте, всё расскажу.',
+       lines:[
+        {q:'Кто знал код от сейфа?', a:'Только я и Иван, старший бариста. <span class="hint" data-h="Подтверждено: код знали владелец и Иван. Владелец в ту ночь был в другом городе (билеты, отель). Остаётся Иван.">Я в ту ночь был в другом городе — билеты и отель подтвердят</span>.'},
+        {q:'Кто-то у вас конфликтовал?', a:'Мари́нку Лебедеву уволили за недостачу. Она кричала, что «ещё докажет». Но она официантка — кода не знала никогда.'},
+        {q:'Опишите Ивана.', a:'Хороший работник, два года у меня. <span class="hint" data-h="У Ивана есть синяя спортивная куртка и носит обувь 44 размера — совпадает со следами и описаниями свидетелей.">Спортивный такой, любит кроссовки, есть синяя куртка любимая</span>.'}]}
+    ],
+    suspects:[
+      {id:'ivan', name:'Иван Сомов, 27', role:'старший бариста', alibi:'«После смены пошёл домой и спал. Один.»', notes:'Знал код от сейфа. Закрывал кофейню в ту ночь. Носит синюю спортивную куртку, обувь 44 размера. Алиби никто не подтверждает.'},
+      {id:'marina', name:'Марина Лебедева, 24', role:'бывшая официантка', alibi:'«Была с подругой в клубе до утра.»', notes:'Уволена за кассовые недостачи, громко злится. Код от сейфа не знала. Подруга алиби подтверждает.'},
+      {id:'timur', name:'Тимур Алиев, 45', role:'уборщик', alibi:'«Дома с женой. Ушёл в 23:00.»', notes:'Имеет ключи. Утверждает, что запер окно подсобки. Жена подтверждает: дома был к часу ночи.'},
+      {id:'gosha', name:'Гоша Крылов, 28', role:'друг Ивана, фитнес-тренер', alibi:'«Тренировал в зале до ночи, зал закрывал.»', notes:'Плечистый, 44 размер обуви. Записи зала подтверждают: до 01:30 был там. В кофейне не бывал, кода не знал.'}
+    ]
+  },
+
+  bike: {
+    emoji:'🚲', title:'Кража велосипеда у подъезда',
+    teaser:'Срезали болгаркой замок: «Стелс» за 45 000 ₽ исчез между 18:00 и 21:00. Двор полон глаз.',
+    intro:'Двор дома №7 по ул. Садовой. Велосипед «Стелс» был пристёгнут к стойке у подъезда. Между 18:00 и 21:00 замок срезали болгаркой. Двор оживлённый, свидетелей много — но темнело, и все торопились по своим делам.',
+    culprit:'vorobey',
+    explanation:'Свежая белая краска на стойке, окурок «Явы» и следы обуви 43 размера выводят на Андрея «Воробья» Ключникова — он работает маляром (белая краска на комбинезоне неизбежна), курит только «Яву», носит 43-й размер. А в интернете вывешено объявление о продаже точно такого же «Стелса» за 15 000 ₽ — с номера телефона его жены. Даня-веломеханик умеет работать с замками, но его следы ведут к мастерской, а не к подъезду, и в тот вечер он чинил три велосипеда при свидетелях.',
+    clues:[
+      {id:'lock', name:'Срезанный замок', desc:'Рез болгаркой, металл оплавлен. <span class="hint" data-h="Болгарка громкая — нужен тот, кто не привлёк внимания: либо работал в костюме «своего» рабочего, либо все привыкли к нему.">Работал уверенно, без спешки</span>.'},
+      {id:'paint', name:'Велостойка', desc:'На металле стойки — <span class="hint" data-h="Свежая белая краска на стойке — на воре, скорее всего, белая краска на одежде. Кто из подозреваемых работает с белой краской?">мазки свежей белой краски</span>. Велосипеда нет.'},
+      {id:'cig', name:'Урна у подъезда', desc:'На асфальте — <span class="hint" data-h="Окурок «Ява» — кто-то курил, дожидаясь удобного момента. Проверьте, кто из подозреваемых курит именно «Яву».">окурок сигарет «Ява»</span>, ещё тёплый на ощупь утром.'},
+      {id:'tracks', name:'Грязь у клумбы', desc:'Следы кроссовок, <span class="hint" data-h="Следы обуви 43 размера ведут от стойки к проезду, где могла стоять машина.">размер 43</span>, идут к проезду для машин.'},
+      {id:'ad', name:'Ноутбук заявителя', desc:'Муж заявительницы нашёл объявление: «Стелс, срочно, 15 000 ₽». <span class="hint" data-h="Объявление о продаже такого же велосипеда выложено на номер, зарегистрированный на жену Воробья. Проверьте телефоны подозреваемых.">Номер в объявлении показался ему знакомым</span>.'}
+    ],
+    witnesses:[
+      {id:'lyuba', name:'Любовь Михайловна', role:'жительница первого этажа', emoji:'🪟',
+       hello:'Я у окна вечно стою, всё вижу. Спросите — расскажу.',
+       lines:[
+        {q:'Что вы видели вечером?', a:'Видела мужика у стойки. <span class="hint" data-h="Свидетель видела человека в БЕЛОМ комбинезоне — как рабочий или маляр. Прохожие не обратили бы внимания на «своего» рабочего.">Белый комбинезон, как рабочий</span>, потому я и не придала значения. Стоял, курил.'},
+        {q:'Во сколько это было?', a:'Минут двадцать восьмого. Я как раз ужин ставила — гляжу в окно.'},
+        {q:'Вы его узнали бы?', a:'Рост средний, худощавый. Комбинезон закрывал лицо не весь — но я больно близко не смотрела, стыдно как-то.'}]},
+      {id:'mitya', name:'Митя Сафронов', role:'подросток, катался на скейте', emoji:'🛹',
+       hello:'Я слышал этот звук ещё! Вот все говорят — никто ничего не слышал, а я слышал.',
+       lines:[
+        {q:'Что ты слышал?', a:'Болгарка орала! <span class="hint" data-h="Звук болгарки был слышен около 19:40. Проверьте алиби подозреваемых именно на это время — это сузит круг.">Минут двадцать восьмого, может чуть раньше</span>. Я нажалуху навернулся, вот и запомнил время.'},
+        {q:'Ты видел кого-нибудь?', a:'Только спинку. <span class="hint" data-h="Парень видел мужчину в белом — у Дани-веломеханика комбинезон тёмно-синий, у Воробья — белый.">Белое такое, как маляр какой-то</span>. Курил и крутился возле стойки.'},
+        {q:'Почему не подошёл?', a:'Да я думал, хозяин замок срезает — свой же велосипед. Потом дверь хлопнула, и я укатил.'}]},
+      {id:'egor', name:'Егор Палыч', role:'гулял с собакой', emoji:'🐕',
+       hello:'Двор мой, всё знаю, всех знаю. Собака моя лучше любой камеры.',
+       lines:[
+        {q:'Заметили что-то подозрительное?', a:'Машина стояла на проезде с включёнными габаритами, <span class="hint" data-h="Белый фургон на проезде в 19:30–20:00 — кто-то ждал или принимал товар. Узнайте, у кого из подозреваемых есть доступ к белому фургону.">белый фургон, старенький</span>. Дольше двадцати минут простоял.'},
+        {q:'Чей фургон?', a:'Не разглядел номер. Но <span class="hint" data-h="Воробей возит инструменты на белом фургоне бригады — он маляр, ездит по объектам. Фургон из показаний совпадает.">белый фургон в нашем дворе — редкость, так запомнилось</span>.'},
+        {q:'Ещё что-нибудь?', a:'Собака на кого-то рычала из-за кустов. Жалко, не на того, наверное.'}]},
+      {id:'uchast', name:'Лейтенант Верба', role:'участковый', emoji:'👮',
+       hello:'Картотеку двора знаю наизусть. Спрашивайте.',
+       lines:[
+        {q:'Кто в районе на заметке?', a:'<span class="hint" data-h="«Воробей» — единственный из подозреваемых, кто уже был судим за кражу и кто работает маляром (белая краска!). Окурки «Явы» у него в кармане — он их не выбрасывает, привычка.">Воробей — ваш клиент. Мелкий, судимый, маляр. Курит «Яву», не скрывает</span>. Ещё Даню-веломеханика знаю — тот честный, хоть и замки все на свете умеет вскрывать.'},
+        {q:'Кто носит 43 размер?', a:'Воробей — сорок третий. Даня — сорок первый, я его в кедах видел сто раз.'},
+        {q:'Кто имеет доступ к фургону?', a:'Воробей на бригадной машине ездит — белый «газелька» старенькая. Даня вообще на метро.'}]}
+    ],
+    suspects:[
+      {id:'vorobey', name:'Андрей «Воробей» Ключников, 33', role:'маляр', alibi:'«После работы был на объекте до темноты, потом дома.»', notes:'Белый комбинезон, сорок третий размер, курит «Яву». Судим за кражу. Ездит на белом фургоне бригады. Жена — номер телефона из объявления о продаже «Стелса».'},
+      {id:'danya', name:'Даня Рощин, 26', role:'веломеханик', alibi:'«До девяти вечера чинил велосипеды в мастерской, клиенты были.»', notes:'Умеет вскрывать любые замки за минуту. Но комбинезон у него тёмно-синий, размер обуви 41. Трое клиентов подтверждают алиби на 19:40.'},
+      {id:'lyudmila', name:'Людмила Власова, 58', role:'соседка заявительницы', alibi:'«Вся вечер у телевизора, сериал шёл.»', notes:'Воровала бы давно — живёт тут тридцать лет, репутация железная. Следы 43 размера — мужской обуви.'},
+      {id:'pyotr', name:'Пётр Сизов, 50', role:'охранник ЖЭКа', alibi:'«Обходил двор, всё чисто было.»', notes:'Знает расписание обходов, носит 44 размер. Но в 19:40 его проверял старший по рации — алиби подтверждено.'}
+    ]
+  },
+
+  laptop: {
+    emoji:'💻', title:'Пропажа ноутбука в коворкинге',
+    teaser:'MacBook исчез с общего стола между 12:00 и 14:00. Камера в коридоре «сломалась» ровно в этот промежуток.',
+    intro:'Коворкинг «Точка». Между 12:00 и 14:00 с общего стола пропал MacBook владелицы места. На столе осталась чашка кофе и чужая флешка. Камера коридора не писала с 12:00 до 13:00 — кабель отключён в сторожке. В журнале посещений — три записи.',
+    culprit:'olga',
+    explanation:'Запись в журнале на 12:05 — «Ольга С.», чек из кофейни на 12:30 оформлен на имя «Ольга», и Ольга Савина сама подтверждает, что сидела за тем столом. Ноутбук пропал именно в это окно. На камере в 13:10 — человек в сером худи с логотипом «Точка»; такие худи выдают на ресепшене только действующим членам, а по записям ресепшена в 13:00 худи получала Ольга («забыла свою кофту, простынула»). Записка «верну в пятницу» — её почерк совпадает с подписью в журнале. Марк Дёмин носит только зелёные худи (есть на всех его фото), а Павел-админ в это время чинил роутер на ресепшене при свидетелях.',
+    clues:[
+      {id:'journal', name:'Журнал посещений', desc:'Три записи за день. <span class="hint" data-h="Запись 12:05 — «Ольга С.». Она сидела именно за столом, с которого пропал ноутбук, в нужное время.">12:05 — «Ольга С.»</span>, 12:40 — «М. Дёмин», 13:30 — «курьер».'},
+      {id:'receipt', name:'Чек на столе', desc:'Кофе, круассан, 12:30. <span class="hint" data-h="Чек оформлен на имя «Ольга» и время 12:30 — она была за столом, когда ноутбук ещё лежал. Её показания стоит перепроверить.">Имя на чеке: «Ольга»</span>.'},
+      {id:'camera', name:'Камера коридора', desc:'Не писала с 12:00 до 13:00. Кабель выдёргнут в сторожке — <span class="hint" data-h="Камеру отключили ТОЛЬКО на час. Значит, вор знал точное расписание и рассчитывал вернуться к «включению» — это человек изнутри, а не случайный проходимец.">ровно на час, не больше</span>.'},
+      {id:'hoodie', name:'Запись ресепшена', desc:'В 13:00 выдали <span class="hint" data-h="В 13:00 на ресепшене выдали серое худи с логотипом. На камере в 13:10 — человек в таком худи выносит рюкзак. Узнайте, кто получил худи.">серое худи с логотипом «Точка»</span> — «гость замёрз, забыл кофту».'},
+      {id:'note2', name:'Записка на столе', desc:'Написано от руки: «Прости, верну в пятницу. Честно.» <span class="hint" data-h="Почерк в записке — с характерным завитком на «О». Сравните с подписями в журнале посещений.">Почерк с завитком на заглавной «О»</span>.'}
+    ],
+    witnesses:[
+      {id:'pavel', name:'Павел Ситников', role:'администратор коворкинга', emoji:'🖥',
+       hello:'Я тут весь день за ресепшеном был. Спросите — вспомню.',
+       lines:[
+        {q:'Кто был в коворкинге днём?', a:'Ольга Савина сидела за большим столом с самого утра. Марк пришёл ближе к часу. <span class="hint" data-h="Павел подтверждает: Ольга сидела за тем столом весь день. Чек, журнал и её присутствие сходятся — она была у ноутбука в нужное время.">Ноутбук, кажется, на месте был, когда Марк проходил</span>.'},
+        {q:'Кто получал худи в 13:00?', a:'А, да — Ольга подошла, говорит, замёрзла, кофту оставила дома. <span class="hint" data-h="Подтверждено: серое худи в 13:00 получила Ольга. На камере в 13:10 человек в сером худи уходит с рюкзаком.">Выдали ей серое, с логотипом</span>.'},
+        {q:'Кто мог отключить камеру?', a:'Сторожку открываю я, но я в обед роутер чинил при всех. <span class="hint" data-h="Камера отключена ровно на час. Ключи от сторожки — у администратора и у членов с премиум-доступом. Список премиум-членов есть у ресепшена.">Ключ от сторожки ещё у премиум-членов есть</span>.'}]},
+      {id:'mark', name:'Марк Дёмин', role:'постоянный посетитель', emoji:'🎧',
+       hello:'Я в наушниках весь день сидел. Но да, кое-что видел.',
+       lines:[
+        {q:'Где вы были между 12 и 14?', a:'За своим столом, в созвоне до половины первого. <span class="hint" data-h="У Марка алиби на созвон до 12:30 — записи встречи есть. Но он мог подойти к столу позже... однако худи на камере серое, а Марк носит только зелёные.">Запись встречи могу показать</span>.'},
+        {q:'Видели Ольгу?', a:'Видел. Сидела за большим столом, печатала. Потом подошла к ресепшену — <span class="hint" data-h="Марк видел, как Ольга шла к ресепшену примерно в 13:00 — именно тогда выдали серое худи.">минут в час, наверное</span>.'},
+        {q:'Что насчёт вашего худи?', a:'Я только зелёные ношу, у меня их три. <span class="hint" data-h="Марк носит только зелёные худи — значит, человек в сером на камере — не он. Проверьте, кому выдавали серое.">Серое — это не моё, можете проверить мои соцсети</span>.'}]},
+      {id:'sveta', name:'Света Ланская', role:'бариста кофейни при коворкинге', emoji:'☕',
+       hello:'Все наши гости ко мне за кофе ходят. Я всех запоминаю.',
+       lines:[
+        {q:'Кто заказывал кофе днём?', a:'Ольга — два раза. Второй раз в половине первого, <span class="hint" data-h="Чек на 12:30 оформлен на «Ольгу» — она была у стола, когда ноутбук ещё лежал.">«Ольга», чек ей отдала</span>.'},
+        {q:'Что-нибудь странное заметили?', a:'Странное — нет. Но <span class="hint" data-h="Ольга спрашивала, есть ли у ресепшена «запасные кофты» для гостей. Она заранее планировала взять серое худи.">спрашивала утром, выдаём ли мы гостям «запасные кофты»</span>. Я говорю — ресепшен выдаёт.'},
+        {q:'Кто из посетителей вас тревожит?', a:'Да никто. Марк тихий, в наушниках. <span class="hint" data-h="Ольга недавно жаловалась, что «заказчик пропал и деньги кончились» — мотив есть: ноутбук стоит под сотню тысяч.">Ольга в последнее время какая-то потерянная, денег, похоже, нет</span>.'}]},
+      {id:'gena', name:'Гена Торопыгин', role:'курьер, забирал посылку', emoji:'📦',
+       hello:'Я десять минут, мне надоело, все допрашивают. Спрашивайте быстрее.',
+       lines:[
+        {q:'Когда вы пришли?', a:'В половине второго, посылку забрал и ушёл. <span class="hint" data-h="Курьер пришёл в 13:30 и сразу ушёл — ноутбук, по показаниям Павла, исчез до 13:10. Алиби курьера покрывает не всё окно, но и улик против него нет.">Журнал подписал, старший посылку выдал лично</span>.'},
+        {q:'Кого видели в коворкинге?', a:'Женщина в серой кофте несла рюкзак к выходу, <span class="hint" data-h="Курьер видел человека в сером худи с рюкзаком около 13:10 — совпадает с записью камеры.">минут через десять после второго</span>. Я подумал — спортсменка какая-то, худи спортивное.'},
+        {q:'Видели лицо?', a:'Нет, капюшон накинут был. Рост средний, походка женская, уверенная.'}]}
+    ],
+    suspects:[
+      {id:'olga', name:'Ольга Савина, 31', role:'фрилансер, премиум-член', alibi:'«Сидела за столом до четырёх, потом ушла. Ноутбук не трогала.»', notes:'Запись в журнале 12:05, чек на «Ольгу» в 12:30. Премиум-доступ — есть ключ от сторожки. Получала серое худи в 13:00. Почерк с завитком на «О» — как в записке. Недавно жаловалась на отсутствие денег.'},
+      {id:'mark', name:'Марк Дёмин, 29', role:'постоянный посетитель', alibi:'«Созвон до 12:30, потом работал за своим столом.»', notes:'В журнале 12:40. На камере человек в сером худи — у Марка только зелёные (три штуки, видно в соцсетях). Алиби на 12:00–12:30 подтверждено записью встречи.'},
+      {id:'pavel', name:'Павел Ситников, 35', role:'администратор', alibi:'«Был на ресепшене, роутер чинил при всех.»', notes:'Имеет доступ к сторожке, где отключена камера. Но в 12:00–13:00 чинил роутер при четырёх свидетелях. Мотива нет — зарплата белая, MacBook в рассрочку взял месяц назад.'},
+      {id:'gena', name:'Гена Торопыгин, 24', role:'курьер', alibi:'«Пришёл в 13:30 за посылкой, ушёл через десять минут.»', notes:'Пропуск в журнале 13:30. Видел человека в сером худи с рюкзаком около 13:10 — то есть сам в это время внутри уже был... нет, видел с улицы через стекло. Улик против него нет.'}
+    ]
+  }
+};
+
+/* ==================== STATE ==================== */
+let state = {
+  diff:'normal', caseId:null, tab:'scene',
+  openedClues:[], hints:[], interviewed:[], asked:{},
+  contraFound:[], eliminated:[], wrong:0, timerId:null, secondsLeft:0
+};
+
+const $ = id => document.getElementById(id);
+
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._to); t._to=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ==================== MENU ==================== */
+function renderMenu(){
+  $('diffRow').innerHTML = Object.entries(DIFFS).map(([k,d])=>
+    `<button class="diff ${state.diff===k?'sel':''}" onclick="setDiff('${k}')">
+       <span class="tag">${d.tag}</span><br><b>${d.label}</b><p>${d.desc}</p></button>`).join('');
+  $('caseList').innerHTML = Object.entries(CASES).map(([k,c])=>
+    `<div class="case-card"><div class="em">${c.emoji}</div><h3>${c.title}</h3><p>${c.teaser}</p>
+     <button class="btn" onclick="openCase('${k}')">Расследовать</button></div>`).join('');
+}
+function setDiff(k){ state.diff=k; document.body.dataset.diff=k; renderMenu(); }
+function openCase(k){
+  state.caseId=k;
+  $('introTitle').textContent = CASES[k].emoji+' '+CASES[k].title;
+  $('introText').innerHTML = CASES[k].intro;
+  show('scr-intro');
+}
+function goMenu(){ stopTimer(); resetState(); show('scr-menu'); }
+
+/* ==================== GAME FLOW ==================== */
+function resetState(){
+  state.openedClues=[]; state.hints=[]; state.interviewed=[]; state.asked={};
+  state.contraFound=[]; state.eliminated=[]; state.wrong=0; state.tab='scene';
+}
+function startInvestigation(){
+  resetState();
+  const c=CASES[state.caseId], d=DIFFS[state.diff];
+  $('caseChip').style.display='block'; $('caseChip').textContent=`${c.title} · ${d.label}`;
+  $('notebookBtn').style.display='block';
+  renderClues(); renderWits(); renderSuspects(); updateNotebook(); showTab('scene');
+  if(d.timer){ startTimer(d.timer); } else { $('timer').style.display='none'; }
+  show('scr-game');
+}
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active'); window.scrollTo(0,0);
+}
+function showTab(t){
+  state.tab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  $('tab-scene').style.display = t==='scene'?'block':'none';
+  $('tab-wit').style.display   = t==='wit'?'block':'none';
+  $('tab-susp').style.display  = t==='susp'?'block':'none';
+  if(t==='wit'){ $('witSelect').style.display='block'; $('witTalk').style.display='none'; }
+}
+
+/* ---------- clues ---------- */
+function renderClues(){
+  $('clueGrid').innerHTML = CASES[state.caseId].clues.map(cl=>
+    `<div class="clue ${state.openedClues.includes(cl.id)?'open':''}" id="clue-${cl.id}">
+       <div class="st">улика</div><h4>${cl.name}</h4><p>${cl.desc}</p>
+       <button class="btn ghost" onclick="openClue('${cl.id}')">${state.openedClues.includes(cl.id)?'Осмотрено':'Осмотреть'}</button>
+     </div>`).join('');
+  bindHints($('clueGrid'));
+}
+function openClue(id){
+  if(!state.openedClues.includes(id)){
+    state.openedClues.push(id);
+    toast('Улика занесена в блокнот');
+  }
+  renderClues();
+}
+
+/* ---------- witnesses ---------- */
+function renderWits(){
+  const list = CASES[state.caseId].witnesses;
+  $('witList').innerHTML = list.map(w=>
+    `<button class="wit" onclick="talkTo('${w.id}')"><div class="ava">${w.emoji}</div>
+       <b>${w.name} ${state.interviewed.includes(w.id)?'✓':''}</b><span>${w.role}</span></button>`).join('');
+  $('witDone').textContent = state.interviewed.length ? `(${state.interviewed.length}/${list.length})` : '';
+}
+function talkTo(id){
+  const w = CASES[state.caseId].witnesses.find(x=>x.id===id);
+  $('witSelect').style.display='none'; $('witTalk').style.display='block';
+  $('witName').textContent = `${w.emoji} ${w.name}`;
+  $('witRole').textContent = w.role;
+  $('witHello').innerHTML = `<span class="who">${w.name}</span>— ${w.hello}`;
+  const askedSet = state.asked[id]||new Set();
+  $('qrow').innerHTML = w.lines.map((l,i)=>
+    `<button class="btn ${askedSet.has(i)?'asked':''}" onclick="ask('${id}',${i})">«${l.q}»</button>`).join('');
+  const contra = $('contra'); contra.style.display='none'; contra.innerHTML='';
+  if(w.lieClue && DIFFS[state.diff].liar && state.openedClues.includes(w.lieClue) && !state.contraFound.includes(id)){
+    contra.style.display='block';
+    contra.innerHTML = `<b>⚠ Несостыковка:</b> показания не совпадают с осмотренной уликой «${CASES[state.caseId].clues.find(c=>c.id===w.lieClue).name}». Этот свидетель лжёт.
+      <div style="margin-top:8px"><button class="btn danger" style="padding:5px 14px;font-size:12.5px" onclick="fixContra('${id}')">Зафиксировать ложь</button></div>`;
+  }
+  if(!state.interviewed.includes(id)){ state.interviewed.push(id); updateNotebook(); renderWits(); }
+}
+function fixContra(id){
+  if(!state.contraFound.includes(id)) state.contraFound.push(id);
+  $('contra').style.display='none';
+  toast('Ложь свидетеля зафиксирована в блокноте');
+  updateNotebook();
+}
+function ask(wid,i){
+  const w = CASES[state.caseId].witnesses.find(x=>x.id===wid);
+  if(!state.asked[wid]) state.asked[wid]=new Set();
+  state.asked[wid].add(i);
+  const chat=$('chat');
+  const you=document.createElement('div'); you.className='msg you';
+  you.innerHTML=`<span class="who">Вы</span>— ${w.lines[i].q}`;
+  const ans=document.createElement('div'); ans.className='msg';
+  ans.innerHTML=`<span class="who">${w.name}</span>— ${w.lines[i].a}`;
+  chat.appendChild(you); chat.appendChild(ans);
+  chat.scrollTop=chat.scrollHeight;
+  bindHints(ans);
+  // re-render buttons (asked state)
+  $('qrow').innerHTML = w.lines.map((l,j)=>
+    `<button class="btn ${state.asked[wid].has(j)?'asked':''}" onclick="ask('${wid}',${j})">«${l.q}»</button>`).join('');
+  updateNotebook();
+}
+function backToWitList(){
+  $('witTalk').style.display='none'; $('witSelect').style.display='block';
+  $('chat').innerHTML='';
+}
+
+/* ---------- hidden hints ---------- */
+function bindHints(root){
+  root.querySelectorAll('.hint').forEach(h=>{
+    if(h._bound) return; h._bound=true;
+    h.addEventListener('click', e=>{
+      e.stopPropagation();
+      const txt=h.dataset.h;
+      if(!state.hints.includes(txt)){
+        state.hints.push(txt);
+        h.classList.add('pulse');
+        toast('🔎 Вы заметили кое-что важное… (записано в блокнот)');
+        updateNotebook();
+      }
+    });
+  });
+}
+
+/* ---------- suspects ---------- */
+function renderSuspects(){
+  const c=CASES[state.caseId], d=DIFFS[state.diff];
+  const pool = c.suspects.slice(0, d.suspects);
+  $('suspGrid').innerHTML = pool.map(s=>
+    `<div class="susp ${state.eliminated.includes(s.id)?'elim':''}">
+       <h4>${s.name}</h4><div class="role">${s.role}</div>
+       <p><b style="color:#cfd6e2">Алиби:</b> ${s.alibi}</p>
+       <p style="margin-top:6px"><b style="color:#cfd6e2">Досье:</b> ${s.notes}</p>
+       ${state.eliminated.includes(s.id)?'':`<button class="btn danger" onclick="accuse('${s.id}')">Обвинить</button>`}
+     </div>`).join('');
+}
+function accuse(id){
+  const c=CASES[state.caseId];
+  if(id===c.culprit){ winScreen(); return; }
+  state.wrong++;
+  state.eliminated.push(id);
+  renderSuspects();
+  toast(`«${c.suspects.find(s=>s.id===id).name.split(',')[0]}» отпущен — улик против него недостаточно. Это удар по вашей репутации.`);
+}
+
+/* ---------- result ---------- */
+function stars(){
+  let s=3;
+  s-=state.wrong;
+  if(state.hints.length> (state.diff==='easy'?6:4)) s--;
+  return Math.max(1,s);
+}
+function winScreen(){
+  stopTimer();
+  const c=CASES[state.caseId];
+  const st='★'.repeat(stars())+'☆'.repeat(3-stars());
+  $('resultBox').innerHTML=`
+    <div class="big">🕵️</div>
+    <h2>Дело раскрыто!</h2>
+    <div class="stars">${st}</div>
+    <p><b style="color:var(--ink)">${c.title}.</b> ${c.explanation}</p>
+    <p style="font-size:12.5px">Улик осмотрено: ${state.openedClues.length}/${c.clues.length} · Свидетелей опрошено: ${state.interviewed.length}/${c.witnesses.length} · Подсказок замечено: ${state.hints.length} · Ошибочных обвинений: ${state.wrong}</p>
+    <div class="row">
+      <button class="btn" onclick="startInvestigation()">Сыграть снова</button>
+      <button class="btn ghost" onclick="goMenu()">К списку дел</button>
+    </div>`;
+  show('scr-result');
+}
+function failScreen(){
+  stopTimer();
+  $('resultBox').innerHTML=`
+    <div class="big">⏰</div>
+    <h2>Время вышло</h2>
+    <p>Дело передано другому детективу. На сложном уровне решать нужно быстро: сначала осмотрите место, потом опросите свидетелей — и сразу бросайте читать досье.</p>
+    <div class="row">
+      <button class="btn" onclick="startInvestigation()">Попробовать снова</button>
+      <button class="btn ghost" onclick="goMenu()">К списку дел</button>
+    </div>`;
+  show('scr-result');
+}
+
+/* ---------- timer ---------- */
+function startTimer(sec){
+  state.secondsLeft=sec; $('timer').style.display='block';
+  stopTimer();
+  state.timerId=setInterval(()=>{
+    state.secondsLeft--;
+    const m=Math.floor(state.secondsLeft/60), s=state.secondsLeft%60;
+    $('timer').textContent=`⏳ ${m}:${String(s).padStart(2,'0')}`;
+    if(state.secondsLeft<=0){ failScreen(); }
+  },1000);
+}
+function stopTimer(){ if(state.timerId){clearInterval(state.timerId); state.timerId=null;} $('timer').style.display='none'; }
+
+/* ---------- notebook ---------- */
+function toggleNb(){ $('nb').classList.toggle('open'); }
+$('notebookBtn').addEventListener('click', toggleNb);
+function updateNotebook(){
+  const c=CASES[state.caseId];
+  $('nbCount').textContent = state.hints.length?`(${state.openedClues.length+state.hints.length})`:'';
+  $('nbClues').innerHTML = state.openedClues.length
+    ? state.openedClues.map(id=>{const cl=c.clues.find(x=>x.id===id);return `<div class="item">🔍 ${cl.name}</div>`}).join('')
+    : '<div class="empty">пока пусто — осмотрите место преступления</div>';
+  $('nbHints').innerHTML = state.hints.length
+    ? state.hints.map(h=>`<div class="item h">💡 ${h}</div>`).join('')
+    : '<div class="empty">подсказки прячутся в тексте улик и показаний…</div>';
+  const wits = state.interviewed.map(id=>{const w=c.witnesses.find(x=>x.id===id);return `<div class="item">${w.emoji} ${w.name} ${state.contraFound.includes(id)?'— <b style="color:var(--danger)">лжёт!</b>':''}</div>`}).join('');
+  $('nbWits').innerHTML = wits || '<div class="empty">никого ещё не опросили</div>';
+}
+
+renderMenu();
+</script>
+</body>
+</html>
